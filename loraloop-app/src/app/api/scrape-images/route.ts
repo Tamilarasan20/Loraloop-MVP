@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { chromium } from "playwright";
 import { localDb } from "@/lib/localDb";
+import { callGemini } from "@/lib/gemini";
 
 // ── Helpers ──
 function isUsefulImage(url: string): boolean {
@@ -230,12 +231,91 @@ export async function POST(req: Request) {
     const finalImages = scored.map(s => s.url).slice(0, 80);
     console.log(`[scrape-images] ✅ ${allImages.size} raw → ${finalImages.length} scored images`);
 
+    // ── Vision AI Pass (Pomelli-style) ──
+    const topCandidates = finalImages.slice(0, 24);
+    const inlineImages: { inlineData: { data: string; mimeType: string } }[] = [];
+    const validUrls: string[] = [];
+
+    await Promise.all(topCandidates.map(async (u) => {
+      try {
+        const resp = await fetch(u, { signal: AbortSignal.timeout(4000) });
+        if (!resp.ok) return;
+        const ct = resp.headers.get("content-type") || "image/jpeg";
+        const buffer = Buffer.from(await resp.arrayBuffer());
+        if (buffer.length > 4 * 1024 * 1024) return; // skip >4MB
+        
+        inlineImages.push({
+          inlineData: { data: buffer.toString("base64"), mimeType: ct }
+        });
+        validUrls.push(u);
+      } catch { /* skip */ }
+    }));
+
+    let categorized: Record<string, string[]> = { products: [], lifestyle: [], logosAndAssets: [], junk: [] };
+    
+    if (inlineImages.length > 0) {
+      console.log(`[scrape-images] 🤖 Passing ${inlineImages.length} images to Gemini Vision...`);
+      const promptText = `Analyze these ${inlineImages.length} images from a brand's website.
+Here are their exact URLs in the same order:
+${validUrls.map((u, i) => `[Image ${i + 1}]: ${u}`).join("\n")}
+
+Categorize the URLs into this exact JSON structure:
+{
+  "products": ["url1"],
+  "lifestyle": ["url2"],
+  "logosAndAssets": ["url3"],
+  "junk": ["url4"]
+}
+
+Categories:
+- products: Clear photos of products being sold (e.g. clothing, software screenshots, objects).
+- lifestyle: Photos of people, environments, or products in use.
+- logosAndAssets: Logos, brand marks, or prominent brand graphics.
+- junk: Icons, low quality images, tracking pixels, pure text banners, or unrelated graphics.
+
+Rules:
+1. Return ONLY valid JSON, no markdown.
+2. ONLY use the exact URLs provided above.
+3. Every URL MUST be in exactly one category.`;
+
+      try {
+        const aiResult = await callGemini({
+          taskType: "image-analysis",
+          prompt: promptText,
+          images: inlineImages,
+          mimeType: "application/json",
+          maxRetries: 1
+        });
+        categorized = JSON.parse(aiResult.text);
+      } catch (err: any) {
+        console.error("[scrape-images] ⚠ AI categorization failed:", err.message);
+        categorized.products = validUrls;
+      }
+    }
+
+    // Filter out junk, keep the rest
+    const qualityImagesSet = new Set([
+      ...(categorized.products || []),
+      ...(categorized.lifestyle || []),
+      ...(categorized.logosAndAssets || [])
+    ]);
+    
+    // Add back the unanalyzed images from the top 80
+    for (const img of finalImages) {
+      if (!validUrls.includes(img) && !qualityImagesSet.has(img)) {
+        qualityImagesSet.add(img);
+      }
+    }
+    
+    const qualityImages = Array.from(qualityImagesSet);
+    console.log(`[scrape-images] 🎯 Final quality images: ${qualityImages.length} (Filtered ${categorized.junk?.length || 0} junk)`);
+
     // Optionally save to knowledge base
     if (businessId) {
       const business = localDb.get(businessId);
       if (business) {
         const existing = business.brand_guidelines?.images || [];
-        const merged = [...new Set([...finalImages, ...existing])].slice(0, 80);
+        const merged = [...new Set([...qualityImages, ...existing])].slice(0, 80);
         localDb.update(businessId, {
           brand_guidelines: { ...(business.brand_guidelines || {}), images: merged }
         });
@@ -244,8 +324,9 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({
-      images: finalImages,
-      total: finalImages.length,
+      images: qualityImages,
+      categories: categorized,
+      total: qualityImages.length,
       raw: allImages.size,
     });
 

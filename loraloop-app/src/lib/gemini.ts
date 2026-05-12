@@ -69,6 +69,18 @@ export const TASK_MODELS: Record<string, GeminiModel[]> = {
   ],
 
   /**
+   * Image Analysis — visual categorization and tagging.
+   * Requires models with vision capabilities.
+   */
+  "image-analysis": [
+    GEMINI_MODELS.FLASH_25,       // 5 RPM  — best vision/JSON
+    GEMINI_MODELS.FLASH_30,       // 5 RPM
+    GEMINI_MODELS.FLASH_20,       // 5 RPM
+    GEMINI_MODELS.PRO_25,
+  ],
+
+
+  /**
    * Business Profile — detailed writing, factual accuracy.
    * Favour capable models over fastest.
    */
@@ -190,6 +202,8 @@ export interface GeminiCallOptions {
   mimeType?: "text/plain" | "application/json";
   /** override model order for this specific call */
   modelOverride?: GeminiModel[];
+  /** optional images for multimodal vision tasks */
+  images?: { inlineData: { data: string; mimeType: string } }[];
   /** minimum acceptable response length in chars (default 50) */
   minLength?: number;
   /**
@@ -233,9 +247,14 @@ export async function callGemini(options: GeminiCallOptions): Promise<GeminiResu
 
       try {
         console.log(`[gemini/${options.taskType}] trying ${model}${attempt > 0 ? ` (retry ${attempt})` : ""}`);
+        
+        const contents: any = options.images && options.images.length > 0
+          ? [{ role: "user", parts: [{ text: options.prompt }, ...options.images] }]
+          : options.prompt;
+
         const response = await genAI.models.generateContent({
           model,
-          contents: options.prompt,
+          contents,
           config,
         });
         const text = response.text?.trim() ?? "";
