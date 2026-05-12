@@ -1,128 +1,92 @@
-# SAM — Research Agent
+# SAM — AI Strategist
 
-## Role
-**Market Research & Brand DNA Extractor**  
-Sam is triggered when a user submits a website URL. He scrapes the site using Playwright (or a multi-strategy HTTP fallback), extracts all brand assets, and runs AI analysis to produce a complete Brand DNA profile plus three strategic documents.
+> **Role**: Analyses market trends and competitor moves; surfaces content opportunities for growth.
 
----
+## Job
 
-## Responsibilities
-- Scrape website colors, fonts, logo, and images (15 extraction strategies)
-- Crawl internal nav pages + CSS files + sitemap + e-commerce APIs in parallel
-- Run Gemini DNA extraction to produce a structured brand profile
-- Generate three knowledge base documents: Business Profile, Market Research, Social Strategy
+Sam supports Lora. Lora decides the plan — Sam supplies the intelligence that feeds the plan.
 
----
+He reads trend signals + competitor activity and surfaces specific, executable content opportunities tied to a format, platform, and teammate (Clara for copy, Steve for visuals, Theo for video, Sarah for publishing/engagement, Sophie for SEO).
 
-## Triggered By
-`POST /api/extract-dna`  
-```json
-{ "url": "https://yourbrand.com" }
+## Endpoint
+
+```
+POST /api/agents/sam
 ```
 
----
+### Request
 
-## What Sam Extracts
-
-### Visual Assets (Playwright + HTTP Fallback)
-| Source | What's extracted |
-|---|---|
-| `<img>` tags (15 lazy-load attrs) | All image URLs including data-src, data-lazy, data-zoom |
-| `<source srcset>` | Responsive `<picture>` images |
-| OG / Twitter meta tags | Hero image (highest quality) |
-| `<link rel=preload as=image>` | Browser-hinted hero images |
-| CSS `background-image` | Inline + CSS file backgrounds |
-| JSON-LD structured data | Schema.org image, logo, contentUrl |
-| `__NEXT_DATA__` / `__NUXT__` | SSR payload images |
-| `<noscript>` fallbacks | Full-res images behind lazy loaders |
-| JS URL patterns | Any image URL in script blocks |
-| Sub-pages (8 parallel) | Nav link pages crawled in parallel |
-| CSS files (8 parallel) | All `url()` in linked stylesheets |
-| Sitemap pages (4–6) | Product/gallery pages from sitemap.xml |
-| Shopify API | `/products.json` + `/collections.json` |
-| WooCommerce API | `/wp-json/wc/v3/products` |
-| WordPress Media | `/wp-json/wp/v2/media` |
-| Magento API | `/rest/V1/products` |
-
-### Brand Attributes
-- Hex color palette (from computed CSS styles)
-- Font families (from computed CSS)
-- Logo URL (10 detection strategies)
-- Page title, meta description, OG tags
-- Structured text sample (up to 6,000 chars)
-
----
-
-## Gemini Analysis (Phase 2)
-
-After scraping, Sam sends everything to Gemini for DNA extraction:
-
-**Task type:** `dna-extraction`  
-**Output JSON:**
 ```json
 {
-  "brandName": "Official brand name",
-  "logoUrl": "https://...",
-  "colors": {
-    "primary": "#hex",
-    "secondary": "#hex",
-    "background": "#hex",
-    "textHighContrast": "#hex",
-    "accent": "#hex"
-  },
-  "typography": {
-    "headingFont": "Google Font name",
-    "bodyFont": "Google Font name"
-  },
-  "tagline": "Brand tagline",
-  "brandValue": "value1, value2, value3",
-  "brandAesthetic": "minimal, modern, editorial",
-  "toneOfVoice": "bold, direct, inspiring",
-  "businessOverview": "2-3 sentence description",
-  "images": ["https://...", "..."]
+  "businessId": "uuid",
+  "industry": "B2B SaaS — DevOps tools",
+  "targetAudience": "Engineering leaders at Series A-C startups",
+  "platforms": ["linkedin", "twitter"],
+  "goal": "Hit 3% engagement on LinkedIn",
+  "periodLabel": "Last 7 days",
+  "competitors": [
+    {
+      "name": "Vercel",
+      "handle": "@vercel",
+      "platform": "twitter",
+      "postingFrequencyPerWeek": 14,
+      "topPosts": [
+        { "title": "v0 ships interactive prototypes", "engagement": 8400, "format": "thread" }
+      ]
+    }
+  ],
+  "trendSignals": [
+    { "topic": "agentic CI", "source": "twitter", "growthMultiplier": 4.2, "volume": 18000 }
+  ]
 }
 ```
 
----
+### Response (abridged)
 
-## Document Generation (Phase 3)
-
-Sam runs 3 Gemini calls in parallel to build the knowledge base:
-
-| Document | Task Type | Min Length | What's in it |
-|---|---|---|---|
-| **Business Profile** | `business-profile` | 400 words | Overview, Products/Services, Key Selling Points, Retail Presence, Target Audience |
-| **Market Research** | `market-research` | 500 words | Market Opportunity, 8–10 Named Competitors, SEO Keywords, Social Audience Segments |
-| **Social Strategy** | `social-strategy` | 500 words | Priority Platforms, Content Pillars, Posting Cadence, Messaging Hierarchy, 30-day Quick Wins |
-
----
-
-## Image Post-Processing
-1. Filter junk (tracking pixels, icons, tiny images, placeholders)
-2. Score all images by quality (dimension hints, CDN size params, path keywords)
-3. Sort best-quality first
-4. Deduplicate by normalised URL (strips CDN resize params)
-5. Remove anything scoring below -20
-6. Clearbit logo fallback if no logo detected
-
----
-
-## Credit Cost
-**4 credits** per call (`sam_research`)
-
----
-
-## Fallback Chain
+```ts
+{
+  agent: 'sam',
+  result: {
+    period: 'Last 7 days',
+    trendSummary: '...',
+    topTrends: [{ topic, relevanceToBrand, accelerationNote, suggestedHook }],
+    competitorInsights: [{ competitor, whatTheyreDoing, whyItsWorking, threatLevel, counterMove }],
+    contentOpportunities: [{ angle, format, platform, whyNow, expectedLift, assignableTo, urgency }],
+    recommendedAngles: ['...'],
+    platformSuggestions: [{ platform, recommendation, reasoning }],
+    risks: ['...'],
+    nextActionsForLora: [{ action, why, priority }]
+  }
+}
 ```
-Playwright (headless Chrome)
-    ↓ fails
-Multi-strategy HTTP fallback
-  ├── Main page HTML scrape
-  ├── 8 sub-page crawls (parallel)
-  ├── CSS file scrapes (parallel)
-  ├── E-commerce APIs (parallel)
-  └── Sitemap crawl (parallel)
-    ↓ Gemini DNA analysis
-    ↓ 3x document generation (parallel)
-    ↓ Return Brand DNA + Documents
-```
+
+## Standards (baked into prompt)
+
+1. **Detect ACCELERATION, not just volume** — a hashtag growing 300% in 4h beats one with steady high volume
+2. **Engagement rate, not followers** — for competitor analysis
+3. **Every insight is actionable** + tied to a specific format/platform
+4. **Quantify expected lift** when data permits
+5. **Label assumptions** when data is missing
+6. **Stay in your lane** — Sam doesn't write copy (Clara) or create visuals (Steve)
+
+## Memory wiring
+
+| Layer        | What gets stored                                          |
+|--------------|-----------------------------------------------------------|
+| `strategic`  | Trend findings, competitor patterns, next-actions-for-Lora |
+
+Retrieval queries `strategic + reflection + brand` from scopes `sam + lora + shared`. Strategic memory is the highest-leverage layer — Lora reads from it when planning.
+
+## Credit cost
+
+`3 credits` per call (`sam_strategy`).
+
+## Integration points
+
+- Auto-triggered weekly by **Lora** as input to her planning cycle
+- Read by **Clara/Steve/Theo/Sarah/Sophie** via the `contentOpportunities.assignableTo` field
+- Manual: `/analytics` (strategic intelligence panel)
+
+## Legacy — Brand DNA scraper
+
+The endpoint `POST /api/extract-dna` (Playwright website scraping + Brand DNA extraction + KB document generation) remains for onboarding flows but is no longer branded as Sam's responsibility. That utility is now invoked directly by the knowledge-base creation funnel.

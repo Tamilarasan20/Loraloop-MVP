@@ -20,6 +20,7 @@ export type AgentScope =
   | 'steve'
   | 'theo'
   | 'sarah'
+  | 'emily'
   | 'elena'
   | 'nick'
   | 'aura'

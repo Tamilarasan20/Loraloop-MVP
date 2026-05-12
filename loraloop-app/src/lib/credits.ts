@@ -3,11 +3,17 @@ import { CREDIT_LIMITS, type PlanKey } from './billing';
 
 // Cost in credits per agent action
 export const AGENT_CREDIT_COST: Record<string, number> = {
+  // Legacy Brand-DNA scraper kept under same costKey for back-compat
   sam_research:   4,
+  // Current Sam — AI Strategist (trends + competitors)
+  sam_strategy:   3,
   clara_content:  2,
   steve_image:    3,
   steve_carousel: 5,
+  // Legacy calendar costKey kept for back-compat; Sarah's current action is `social`
   sarah_calendar: 1,
+  sarah_social:   2,
+  emily_email:    2,
   lora_review:    1,
   lora_strategy:  2,
   sophie_seo:     3,
