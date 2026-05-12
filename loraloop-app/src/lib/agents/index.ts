@@ -46,6 +46,52 @@ export type {
   ContentSource,
 } from './nick';
 
+// Sam — AI Strategist (trends + competitors)
+export { runSam } from './sam';
+export type {
+  SamInput,
+  SamOutput,
+  SamPlatform,
+  SamCompetitor,
+  SamTrendSignal,
+  SamCompetitorInsight,
+  SamContentOpportunity,
+} from './sam';
+
+// Sarah — AI Social Media Manager (publish + engage)
+export {
+  runSarahSchedule,
+  runSarahEngage,
+  runSarahCalendar,
+} from './sarah';
+export type {
+  SarahScheduleRequest,
+  SarahScheduleOutput,
+  SarahEngagementRequest,
+  SarahEngagementOutput,
+  SarahEngagementItem,
+  SarahCalendarRequest,
+  SarahCalendarPlan,
+  SarahCalendarSlot,
+  SocialPlatform,
+  EngagementType,
+} from './sarah';
+
+// Emily — AI Email Marketer
+export {
+  runEmilyEmail,
+  runEmilySequence,
+} from './emily';
+export type {
+  EmilyEmailRequest,
+  EmilyEmailOutput,
+  EmilySequenceRequest,
+  EmilySequencePlan,
+  EmilySequenceStep,
+  EmailGoal,
+  EmailSegment,
+} from './emily';
+
 // Pipeline coordinator
 export { orchestrateContent } from './orchestrator';
 

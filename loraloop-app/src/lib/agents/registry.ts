@@ -14,7 +14,8 @@ export type AgentCategory =
   | 'seo'
   | 'ads'
   | 'analytics'
-  | 'calendar'
+  | 'social'
+  | 'email'
   | 'autonomous';
 
 export interface AgentMeta {
@@ -34,19 +35,19 @@ export const AGENT_REGISTRY: AgentMeta[] = [
   {
     id: 'sam',
     name: 'Sam',
-    role: 'Research Agent',
-    tagline: 'Scrapes any website and produces a complete Brand DNA profile.',
-    category: 'research',
-    costKey: 'sam_research',
-    credits: 4,
-    endpoint: '/api/extract-dna',
+    role: 'AI Strategist',
+    tagline: 'Analyses market trends and competitor moves; surfaces content opportunities for growth.',
+    category: 'strategy',
+    costKey: 'sam_strategy',
+    credits: 3,
+    endpoint: '/api/agents/sam',
     docPath: 'docs/agents/SAM.md',
   },
   {
     id: 'lora',
     name: 'Lora',
-    role: 'CMO / Strategy',
-    tagline: 'Plans the angle, tone, and platform adaptation for every post.',
+    role: 'AI Marketing Lead',
+    tagline: 'Turns business goals into an execution plan and assigns tasks across the team.',
     category: 'strategy',
     costKey: 'lora_strategy',
     credits: 2,
@@ -56,8 +57,8 @@ export const AGENT_REGISTRY: AgentMeta[] = [
   {
     id: 'clara',
     name: 'Clara',
-    role: 'Copywriter',
-    tagline: 'Writes the hook, caption, overlays, and hashtags.',
+    role: 'AI Content Writer',
+    tagline: 'Writes blogs, emails, threads, newsletters, social posts — persuasive content that drives action.',
     category: 'copy',
     costKey: 'clara_content',
     credits: 2,
@@ -67,8 +68,8 @@ export const AGENT_REGISTRY: AgentMeta[] = [
   {
     id: 'steve',
     name: 'Steve',
-    role: 'Visual Designer',
-    tagline: 'Builds brand-locked image prompts and generates visuals.',
+    role: 'AI Visual Designer',
+    tagline: 'Designs scroll-stopping posts and carousels that reflect your brand on every platform.',
     category: 'visual',
     costKey: 'steve_image',
     credits: 3,
@@ -78,8 +79,8 @@ export const AGENT_REGISTRY: AgentMeta[] = [
   {
     id: 'sophie',
     name: 'Sophie',
-    role: 'SEO / GEO Manager',
-    tagline: 'Optimises content to rank on Google AND in ChatGPT, Claude, Perplexity.',
+    role: 'AI SEO + GEO Manager',
+    tagline: 'Optimises your content for SEO and GEO so people find you on Google and on ChatGPT, Claude, Perplexity.',
     category: 'seo',
     costKey: 'sophie_seo',
     credits: 3,
@@ -89,8 +90,8 @@ export const AGENT_REGISTRY: AgentMeta[] = [
   {
     id: 'theo',
     name: 'Theo',
-    role: 'Video Producer',
-    tagline: 'Plans and scripts short-form videos for TikTok, Reels, Shorts.',
+    role: 'AI Video Producer',
+    tagline: 'Plans and scripts short-form videos for TikTok, Instagram, YouTube — turns ideas into engaging video.',
     category: 'video',
     costKey: 'theo_video',
     credits: 4,
@@ -100,8 +101,8 @@ export const AGENT_REGISTRY: AgentMeta[] = [
   {
     id: 'elena',
     name: 'Elena',
-    role: 'Ads Manager',
-    tagline: 'Runs and scales paid campaigns across Meta, Google, TikTok, LinkedIn.',
+    role: 'AI Ads Manager',
+    tagline: 'Runs and scales your ad campaigns across Meta, Google, TikTok, LinkedIn — optimising for ROI.',
     category: 'ads',
     costKey: 'elena_ads',
     credits: 4,
@@ -111,8 +112,8 @@ export const AGENT_REGISTRY: AgentMeta[] = [
   {
     id: 'nick',
     name: 'Nick',
-    role: 'Analyst',
-    tagline: 'Reports what worked, what didn\'t, and what to do next.',
+    role: 'AI Analyst',
+    tagline: 'Tracks content, posts and ads — reports what worked, what didn\'t, and what to improve next.',
     category: 'analytics',
     costKey: 'nick_analyze',
     credits: 2,
@@ -122,13 +123,24 @@ export const AGENT_REGISTRY: AgentMeta[] = [
   {
     id: 'sarah',
     name: 'Sarah',
-    role: 'Content Calendar',
-    tagline: 'Schedules posts at the optimal time for each platform.',
-    category: 'calendar',
-    costKey: 'sarah_calendar',
-    credits: 1,
-    endpoint: '/api/postiz',
+    role: 'AI Social Media Manager',
+    tagline: 'Schedules and publishes posts, replies to comments, and nurtures community relationships.',
+    category: 'social',
+    costKey: 'sarah_social',
+    credits: 2,
+    endpoint: '/api/agents/sarah',
     docPath: 'docs/agents/SARAH.md',
+  },
+  {
+    id: 'emily',
+    name: 'Emily',
+    role: 'AI Email Marketer',
+    tagline: 'Writes and sequences email campaigns — subject-line testing, segments, and lifecycle flows.',
+    category: 'email',
+    costKey: 'emily_email',
+    credits: 2,
+    endpoint: '/api/agents/emily',
+    docPath: 'docs/agents/EMILY.md',
   },
   {
     id: 'aura',
