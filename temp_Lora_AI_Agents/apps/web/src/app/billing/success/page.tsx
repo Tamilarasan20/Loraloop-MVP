@@ -1,6 +1,5 @@
 'use client';
 
-import { Suspense } from 'react';
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, Zap, ArrowRight, Loader2 } from 'lucide-react';
@@ -17,7 +16,7 @@ interface VerifyResult {
   credits: number;
 }
 
-function BillingSuccessContent() {
+export default function BillingSuccessPage() {
   const searchParams  = useSearchParams();
   const router        = useRouter();
   const qc            = useQueryClient();
@@ -137,13 +136,5 @@ function BillingSuccessContent() {
         </button>
       </div>
     </div>
-  );
-}
-
-export default function BillingSuccessPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-violet-600" /></div>}>
-      <BillingSuccessContent />
-    </Suspense>
   );
 }
