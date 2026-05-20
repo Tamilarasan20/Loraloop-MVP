@@ -17,6 +17,11 @@ function cleanImageList(raw: any[]): string[] {
   for (const item of raw) {
     const src = typeof item === "string" ? item : (item?.url || "");
     if (!src) continue;
+    // Local brand-assets paths (e.g. /brand-assets/id/0.webp) — accept directly
+    if (src.startsWith("/brand-assets/") || src.startsWith("/")) {
+      if (!src.includes(" ")) results.push(src);
+      continue;
+    }
     // Srcset strings: "url1 1024w, url2 600w" or "url1 2x, url2 1x"
     if (/\s+\d+(\.\d+)?[wx]/.test(src) || /,\s*https?:\/\//.test(src)) {
       // Extract the highest-res URL (last entry = largest width in ascending srcset)
