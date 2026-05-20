@@ -1,12 +1,12 @@
 /**
  * Shared brand-loading helper used by autonomous agent API routes.
- * Loads a business from Supabase by id, or falls back to mock data.
+ * Loads a business from localDb by id, or falls back to mock data.
  */
 
 import type { BrandVoice, BusinessKnowledgeBase } from '@/types/agents';
 import { extractBrandVoice } from '../brandVoiceEngine';
 import { getMockBusiness } from '../mockData';
-import { getServiceSupabase } from '../supabase';
+import { localDb } from '../localDb';
 
 export interface BrandContext {
   businessName: string;
@@ -19,12 +19,7 @@ export async function loadBrandContext(businessId?: string): Promise<BrandContex
 
   if (businessId) {
     try {
-      const supabase = getServiceSupabase();
-      const { data } = await supabase
-        .from('businesses')
-        .select('*')
-        .eq('id', businessId)
-        .single();
+      const data = localDb.get(businessId);
 
       if (data) {
         const enrichedData = data.enriched_data || {};
@@ -65,7 +60,7 @@ export async function loadBrandContext(businessId?: string): Promise<BrandContex
         kb = getMockBusiness();
       }
     } catch (err) {
-      console.warn('[loadBrandContext] Supabase load failed, using mock:', err);
+      console.warn('[loadBrandContext] localDb load failed, using mock:', err);
       kb = getMockBusiness();
     }
   } else {

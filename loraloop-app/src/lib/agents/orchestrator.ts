@@ -8,23 +8,15 @@ import { extractBrandVoice, generateBrandVoiceSummary } from '../brandVoiceEngin
 import { runLora } from './lora';
 import { runClara } from './clara';
 import { runSteve } from './steve';
-import { getServiceSupabase } from '../supabase';
-import { getMemoryContext, extractFacts } from './_memoryContext';
+import { localDb } from '../localDb';
 
 async function loadBusinessKB(businessId: string): Promise<BusinessKnowledgeBase> {
-  const supabase = getServiceSupabase();
-  const { data, error } = await supabase
-    .from('businesses')
-    .select('*')
-    .eq('id', businessId)
-    .single();
-
-  if (error || !data) throw new Error(`Business not found: ${businessId}`);
+  const data = localDb.get(businessId);
+  if (!data) throw new Error(`Business not found: ${businessId}`);
 
   const enrichedData = data.enriched_data || {};
   const brandGuidelines = data.brand_guidelines || {};
 
-  // Map Supabase array-based colors to object format
   const colorsArray: Array<{ usage: string; hex: string }> = brandGuidelines.colors || [];
   const colorsObj = colorsArray.reduce((acc: Record<string, string>, c) => {
     acc[c.usage] = c.hex;
@@ -86,26 +78,6 @@ export async function orchestrateContent(input: OrchestratorInput): Promise<Orch
     const brandVoice = extractBrandVoice(kb);
     const brandSummary = generateBrandVoiceSummary(brandVoice);
 
-    // Pre-fetch memory for Lora and Clara in parallel (if a workspaceId was provided).
-    const [loraMemory, claraMemory] = input.workspaceId
-      ? await Promise.all([
-          getMemoryContext({
-            workspaceId: input.workspaceId,
-            query:       input.goal,
-            layers:      ['strategic', 'reflection'],
-            agentScopes: ['lora', 'nick', 'shared'],
-            limit:       8,
-          }),
-          getMemoryContext({
-            workspaceId: input.workspaceId,
-            query:       input.goal,
-            layers:      ['brand', 'preference', 'reflection'],
-            agentScopes: ['clara', 'shared'],
-            limit:       8,
-          }),
-        ])
-      : ['', ''];
-
     // Run Lora
     console.log('🧠 Running LORA...');
     const loraOutput = await runLora({
@@ -114,20 +86,8 @@ export async function orchestrateContent(input: OrchestratorInput): Promise<Orch
       businessName,
       brandVoice,
       businessProfile: kb.businessProfile,
-      memoryContext: loraMemory,
+      memoryContext: '',
     });
-
-    // Lora's strategic decisions become durable strategic memory
-    if (input.workspaceId) {
-      extractFacts({
-        workspaceId: input.workspaceId,
-        agentScope:  'lora',
-        layer:       'strategic',
-        raw:         JSON.stringify({ goal: input.goal, platform: input.platform, strategy: loraOutput }),
-        sourceType:  'lora-strategy',
-        metadata:    { goal: input.goal, platform: input.platform },
-      });
-    }
 
     // Run Clara
     console.log('✍️  Running CLARA...');
@@ -137,7 +97,7 @@ export async function orchestrateContent(input: OrchestratorInput): Promise<Orch
       businessName,
       platform: input.platform,
       goal: input.goal,
-      memoryContext: claraMemory,
+      memoryContext: '',
     });
 
     // Run Steve if image requested

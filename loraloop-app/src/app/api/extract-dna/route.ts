@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { chromium, Browser, Page } from "playwright";
 import { callGemini } from "@/lib/gemini";
-import { meterIfAuthed } from "@/lib/withCredits";
 
 // ────────────────────────────────────────────────────────────────
 // UTILITY
@@ -982,9 +981,6 @@ export async function POST(req: Request) {
     const body = await req.json();
     const rawUrl = body?.url;
     if (!rawUrl) return NextResponse.json({ error: "URL is required" }, { status: 400 });
-
-    const metered = await meterIfAuthed('sam', 'research');
-    if (!metered.ok) return metered.response;
 
     const url = normalizeUrl(rawUrl);
     console.log("[extract-dna] 🚀 Starting deep extraction for:", url);

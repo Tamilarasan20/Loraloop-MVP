@@ -228,7 +228,8 @@ export default function VisualAssetGallery({
   brandName,
 }: VisualAssetGalleryProps) {
   const validImages = images.filter(
-    (u) => typeof u === "string" && u.startsWith("http") && !u.includes(" ")
+    (u) => typeof u === "string" && !u.includes(" ") &&
+      (u.startsWith("http") || u.startsWith("/brand-assets/") || u.startsWith("/"))
   );
 
   return (
